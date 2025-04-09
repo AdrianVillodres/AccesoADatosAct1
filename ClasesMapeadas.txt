@@ -1,0 +1,7 @@
+people----
+books---
+products----
+countries
+grades
+restaurants
+students

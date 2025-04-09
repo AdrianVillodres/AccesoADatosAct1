@@ -21,7 +21,7 @@ namespace UF3_test
             //SelectAllStudents();
             //InsertOneStudent();
             //SelectOneStudent();
-            //SelectStudentFields();            
+            SelectStudentFields();            
             //LoadPeopleCollection();
             //LoadBooksCollection();
             //LoadProductsCollection();
@@ -123,7 +123,6 @@ namespace UF3_test
 
             Console.WriteLine(id.ToString());
             Console.WriteLine(scores.ToString());
-
         }
 
         private static void LoadPeopleCollection()

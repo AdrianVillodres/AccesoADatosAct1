@@ -1,8 +1,8 @@
-﻿
-
-using MongoDB.Bson;
+﻿using MongoDB.Bson;
+using MongoDB.Driver;
 using UF3_test.connections;
-
+using UF3_test.model;
+using Newtonsoft.Json;
 class Program
 {
     static void Main(string[] args)
@@ -33,12 +33,12 @@ class Program
                     break;
                 case "2":
                     Console.WriteLine("");
-
+                    SelectStudentsInClass();
                     Console.WriteLine("");
                     break;
                 case "3":
                     Console.WriteLine("");
-
+                    SelectStudentsByGrade();
                     Console.WriteLine("");
                     break;
                 case "4":
@@ -58,7 +58,9 @@ class Program
                     break;
                 case "7":
                     Console.WriteLine("");
-
+                    LoadBooksCollection();
+                    LoadPeopleCollection();
+                    LoadProductsCollection();
                     Console.WriteLine("");
                     break;
                 case "0":
@@ -124,6 +126,97 @@ class Program
         collection.InsertMany(students);
 
         Console.WriteLine("Estudiants insertats correctament.");
+    }
+
+
+    private static void SelectStudentsInClass()
+    {
+        var database = MongoLocalConnection.GetDatabase("sample_training");
+        var collection = database.GetCollection<BsonDocument>("grades");
+        var filter = Builders<BsonDocument>.Filter.Eq("group", "Damv1");
+        var studentDocuments = collection.Find(filter).ToList();
+
+        foreach (var student in studentDocuments)
+        {
+            Console.WriteLine(student.ToString());
+        }
+    }
+
+
+    private static void SelectStudentsByGrade()
+    {
+    
+    }
+
+    private static void LoadPeopleCollection()
+    {
+        FileInfo file = new FileInfo("../../../files/people.json");
+        StreamReader sr = file.OpenText();
+        string fileString = sr.ReadToEnd();
+        sr.Close();
+        List<Person> people = JsonConvert.DeserializeObject<List<Person>>(fileString);
+
+        var database = MongoLocalConnection.GetDatabase("itb");
+        database.DropCollection("people");
+        var collection = database.GetCollection<BsonDocument>("people");
+
+        if (people != null)
+            foreach (var person in people)
+            {
+                Console.WriteLine(person.name);
+                string json = JsonConvert.SerializeObject(person);
+                var document = new BsonDocument();
+                document.Add(BsonDocument.Parse(json));
+                collection.InsertOne(document);
+            }
+    }
+
+    private static void LoadBooksCollection()
+    {
+        FileInfo file = new FileInfo("../../../files/books.json");
+        StreamReader sr = file.OpenText();
+        string fileString = sr.ReadToEnd();
+        sr.Close();
+        List<Book> books = JsonConvert.DeserializeObject<List<Book>>(fileString);
+
+        var database = MongoLocalConnection.GetDatabase("itb");
+        database.DropCollection("books");
+        var collection = database.GetCollection<BsonDocument>("books");
+
+        if (books != null)
+            foreach (var book in books)
+            {
+                Console.WriteLine(book.title);
+                string json = JsonConvert.SerializeObject(book);
+                var document = new BsonDocument();
+                document.Add(BsonDocument.Parse(json));
+                collection.InsertOne(document);
+            }
+    }
+
+    private static void LoadProductsCollection()
+    {
+
+        var database = MongoLocalConnection.GetDatabase("itb");
+        database.DropCollection("products");
+        var collection = database.GetCollection<BsonDocument>("products");
+
+        FileInfo file = new FileInfo("../../../files/products.json");
+
+        using (StreamReader sr = file.OpenText())
+        {
+            string line;
+            while ((line = sr.ReadLine()) != null)
+            {
+                Product product = JsonConvert.DeserializeObject<Product>(line);
+                Console.WriteLine(product.name);
+                string json = JsonConvert.SerializeObject(product);
+                var document = new BsonDocument();
+                document.Add(BsonDocument.Parse(json));
+                collection.InsertOne(document);
+            }
+        }
+
     }
 
 
