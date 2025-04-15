@@ -3,6 +3,7 @@ using MongoDB.Driver;
 using UF3_test.connections;
 using UF3_test.model;
 using Newtonsoft.Json;
+using cat.itb.NF3EA1_VillodresAdrian.Model;
 class Program
 {
     static void Main(string[] args)
@@ -19,7 +20,13 @@ class Program
             Console.WriteLine("4. Mostra totes les dades dels estudiants que tenen més d’un 99 al quiz.");
             Console.WriteLine("5. Mostra només els interessos del l’estudiant amb student_id=888666333.");
             Console.WriteLine("6. Mostra només el nom i el cognom de l’estudiant amb student_id=444777888.");
-            Console.WriteLine("7. Crea els mètodes per importar a la base de dades \"itb\" els fitxers JSON \"people.json\", \"books.json\",\r\n\"products.json\", \"restaurants.json\", \"students.json\", \"grades.json\" i \"countries.json\" . Has de crear les classes model\r\ncorresponents per cada col·lecció");
+            Console.WriteLine("7. Importar people.json");
+            Console.WriteLine("8. Importar books.json");
+            Console.WriteLine("9. Importar products.json");
+            Console.WriteLine("10. Importar restaurants.json");
+            Console.WriteLine("11. Importar students.json");
+            Console.WriteLine("12. Importar grades.json");
+            Console.WriteLine("13. Importar countries.json");
             Console.WriteLine("0. Exit");
             Console.Write("Option: ");
 
@@ -38,29 +45,57 @@ class Program
                     break;
                 case "3":
                     Console.WriteLine("");
-                    SelectStudentsByGrade();
+                    SelectStudentsByGrade(90);
                     Console.WriteLine("");
                     break;
                 case "4":
                     Console.WriteLine("");
-
+                    SelectStudentsMoreThan(99.0f);
                     Console.WriteLine("");
                     break;
                 case "5":
                     Console.WriteLine("");
-
+                    SelectStudentById(888666333);
                     Console.WriteLine("");
                     break;
                 case "6":
                     Console.WriteLine("");
-
+                    SelectStudentNameById(444777888);
                     Console.WriteLine("");
                     break;
                 case "7":
                     Console.WriteLine("");
-                    LoadBooksCollection();
+                    LoadBooksCollection();                    
+                    Console.WriteLine("");
+                    break;
+                case "8":
+                    Console.WriteLine("");
                     LoadPeopleCollection();
+                    Console.WriteLine("");
+                    break;
+                case "9":
+                    Console.WriteLine("");
                     LoadProductsCollection();
+                    Console.WriteLine("");
+                    break;
+                case "10":
+                    Console.WriteLine("");
+                    LoadCountriesCollection();
+                    Console.WriteLine("");
+                    break;
+                case "11":
+                    Console.WriteLine("");
+                    LoadGradesCollection();
+                    Console.WriteLine("");
+                    break;
+                case "12":
+                    Console.WriteLine("");
+                    LoadRestaurantsCollection();
+                    Console.WriteLine("");
+                    break;
+                case "13":
+                    Console.WriteLine("");
+                    LoadStudentsCollection();
                     Console.WriteLine("");
                     break;
                 case "0":
@@ -143,9 +178,50 @@ class Program
     }
 
 
-    private static void SelectStudentsByGrade()
+    private static void SelectStudentsByGrade(int grade)
     {
-    
+        var database = MongoLocalConnection.GetDatabase("sample_training");
+        var collection = database.GetCollection<BsonDocument>("grades");
+        var filter = Builders<BsonDocument>.Filter.ElemMatch<BsonValue>("scores", new BsonDocument { { "type", "exam" }, { "score", new BsonDocument { { "$eq", grade } } } });
+        var exam = collection.Find(filter).ToList();
+        foreach(var student in exam)
+        {
+            Console.WriteLine(student.ToString());
+        }
+    }
+
+
+    private static void SelectStudentsMoreThan(float grade)
+    {
+        var database = MongoLocalConnection.GetDatabase("sample_training");
+        var collection = database.GetCollection<BsonDocument>("grades");
+        var filter = Builders<BsonDocument>.Filter.ElemMatch<BsonValue>("scores", new BsonDocument { { "type", "quiz" }, { "score", new BsonDocument { { "$gt", grade } } } });
+        var exam = collection.Find(filter).ToList();
+        foreach (var student in exam)
+        {
+            Console.WriteLine(student.ToString());
+        }
+    }
+
+    private static void SelectStudentById(int id)
+    {
+        var database = MongoLocalConnection.GetDatabase("sample_training");
+        var collection = database.GetCollection<BsonDocument>("grades");
+        var filter = Builders<BsonDocument>.Filter.Eq("student_id", id);
+        var student = collection.Find(filter).FirstOrDefault();
+        var studentinterests = student.GetElement("interests");
+        Console.WriteLine(studentinterests.ToString());
+    }
+
+    private static void SelectStudentNameById(int id)
+    {
+        var database = MongoLocalConnection.GetDatabase("sample_training");
+        var collection = database.GetCollection<BsonDocument>("grades");
+        var filter = Builders<BsonDocument>.Filter.Eq("student_id", id);
+        var student = collection.Find(filter).FirstOrDefault();
+        var studentname = student.GetElement("name");
+        var studentsurname = student.GetElement("surname");
+        Console.WriteLine(studentname.ToString() + " " + studentsurname.ToString());
     }
 
     private static void LoadPeopleCollection()
@@ -216,8 +292,109 @@ class Program
                 collection.InsertOne(document);
             }
         }
-
     }
 
+    private static void LoadCountriesCollection()
+    {
+        var database = MongoLocalConnection.GetDatabase("itb");
+        database.DropCollection("countries");
+        var collection = database.GetCollection<BsonDocument>("countries");
+
+        FileInfo file = new FileInfo("../../../files/countries.json");
+
+        using (StreamReader sr = file.OpenText())
+        {
+            string jsonContent = sr.ReadToEnd();
+            List<Country> countries = JsonConvert.DeserializeObject<List<Country>>(jsonContent);
+
+            foreach (var country in countries)
+            {
+                Console.WriteLine(country.name);
+                string json = JsonConvert.SerializeObject(country);
+                var document = new BsonDocument();
+                document.Add(BsonDocument.Parse(json));
+                collection.InsertOne(document);
+            }
+        }
+    }
+
+    private static void LoadGradesCollection()
+    {
+        var database = MongoLocalConnection.GetDatabase("itb");
+        database.DropCollection("grades");
+        var collection = database.GetCollection<BsonDocument>("grades");
+
+        FileInfo file = new FileInfo("../../../files/grades.json");
+
+        using (StreamReader sr = file.OpenText())
+        {
+            string line;
+            while ((line = sr.ReadLine()) != null)
+            {
+                Grade grades = JsonConvert.DeserializeObject<Grade>(line);
+                if (grades._id != null && !string.IsNullOrEmpty(grades._id.oid))
+                {
+                    Console.WriteLine(grades._id.oid);
+                }
+                string json = JsonConvert.SerializeObject(grades);
+                var document = BsonDocument.Parse(json);
+                document.Remove("_id");
+                collection.InsertOne(document);
+            }
+        }
+    }
+
+    private static void LoadRestaurantsCollection()
+    {
+        var database = MongoLocalConnection.GetDatabase("itb");
+        database.DropCollection("restaurants");
+        var collection = database.GetCollection<BsonDocument>("restaurants");
+
+        FileInfo file = new FileInfo("../../../files/restaurants.json");
+
+        using (StreamReader sr = file.OpenText())
+        {
+            string line;
+            while ((line = sr.ReadLine()) != null)
+            {
+                Restaurant restaurants = JsonConvert.DeserializeObject<Restaurant>(line);
+                if (restaurants.name != null && !string.IsNullOrEmpty(restaurants.name))
+                {
+                    Console.WriteLine(restaurants.name);
+                }
+                string json = JsonConvert.SerializeObject(restaurants);
+                var document = new BsonDocument();
+                document = BsonDocument.Parse(json);
+                collection.InsertOne(document);
+            }
+        }
+    }
+
+
+    private static void LoadStudentsCollection()
+    {
+        var database = MongoLocalConnection.GetDatabase("itb");
+        database.DropCollection("students");
+        var collection = database.GetCollection<BsonDocument>("students");
+
+        FileInfo file = new FileInfo("../../../files/students.json");
+
+        using (StreamReader sr = file.OpenText())
+        {
+            string line;
+            while ((line = sr.ReadLine()) != null)
+            {
+                Student students = JsonConvert.DeserializeObject<Student>(line);
+                if (students.firstname != null && !string.IsNullOrEmpty(students.firstname))
+                {
+                    Console.WriteLine(students.firstname);
+                }
+                string json = JsonConvert.SerializeObject(students);
+                var document = BsonDocument.Parse(json);
+                document = BsonDocument.Parse(json);
+                collection.InsertOne(document);
+            }
+        }
+    }
 
 }

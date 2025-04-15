@@ -28,10 +28,12 @@ namespace cat.itb.NF3EA1_VillodresAdrian.Model
         public string[] borders { get; set; }
         public string nativeName { get; set; }
         public string numericCode { get; set; }
-        public List<string[]> currencies { get; set; }  
-        public List<string> languages { get; set; }
-        public List<string> translations { get; set; }
-
-
-
+        public List<Currency> currencies { get; set; }
+        public List<Language> languages { get; set; }
+        public Translation translations { get; set; }
+        public string flag { get; set; }
+        public List<RegionalBloc> regionalBlocs { get; set; }
+        public string cioc { get; set; }
     }
+
+}
